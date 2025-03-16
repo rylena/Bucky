@@ -9,6 +9,7 @@ BLEScan* pBLEScan;
 
 #define MAX_COMMAND_LENGTH 256
 #define HISTORY_SIZE 10
+#define SERIAL_BUFFER_SIZE 1024  // Increase buffer size
 
 // Command history management
 String commandHistory[HISTORY_SIZE];
@@ -141,26 +142,96 @@ void initializeBLE() {
     bleKeyboard->begin();
 }
 
+// Add this new function to execute a single command
+void executeSingleCommand(String command) {
+    command.trim();
+    
+    if (command == "SPACE") {
+        Serial.println("Pressing Space");
+        bleKeyboard->write(' ');
+    }
+    else if (command == "WIN" || command == "META") {
+        Serial.println("Pressing Windows/Meta key");
+        bleKeyboard->press(KEY_LEFT_GUI);
+        delay(100);
+        bleKeyboard->releaseAll();
+    }
+    else if (command.startsWith("WIN ") || command.startsWith("META ")) {
+        char key = command.charAt(4);
+        Serial.println("Pressing Windows/Meta+" + String(key));
+        bleKeyboard->press(KEY_LEFT_GUI);
+        bleKeyboard->press(key);
+        delay(100);
+        bleKeyboard->releaseAll();
+    }
+    else if (command.startsWith("STRING ")) {
+        String text = command.substring(7);
+        Serial.println("\nTyping: " + text);
+        bleKeyboard->print(text);
+    }
+    else if (command == "ENTER") {
+        Serial.println("Pressing ENTER");
+        bleKeyboard->write(KEY_RETURN);
+    }
+    else if (command.startsWith("DELAY ")) {
+        int delayTime = command.substring(6).toInt();
+        Serial.println("Delaying: " + String(delayTime) + " ms");
+        delay(delayTime);
+    }
+    else if (command == "CTRL ALT DELETE") {
+        Serial.println("Pressing CTRL+ALT+DELETE");
+        bleKeyboard->press(KEY_LEFT_CTRL);
+        bleKeyboard->press(KEY_LEFT_ALT);
+        bleKeyboard->press(KEY_DELETE);
+        delay(100);
+        bleKeyboard->releaseAll();
+    }
+    else if (command.startsWith("CTRL ")) {
+        char key = command.charAt(5);
+        Serial.println("Pressing CTRL+" + String(key));
+        bleKeyboard->press(KEY_LEFT_CTRL);
+        bleKeyboard->press(key);
+        delay(100);
+        bleKeyboard->releaseAll();
+    }
+    else if (command.startsWith("ALT ")) {
+        char key = command.charAt(4);
+        Serial.println("Pressing ALT+" + String(key));
+        bleKeyboard->press(KEY_LEFT_ALT);
+        bleKeyboard->press(key);
+        delay(100);
+        bleKeyboard->releaseAll();
+    }
+    else if (command.startsWith("SHIFT ")) {
+        char key = command.charAt(6);
+        Serial.println("Pressing SHIFT+" + String(key));
+        bleKeyboard->press(KEY_LEFT_SHIFT);
+        bleKeyboard->press(key);
+        delay(100);
+        bleKeyboard->releaseAll();
+    }
+}
+
+// Modify executeCommand() to handle multiple commands
 void executeCommand() {
     String command = String(cmdBuffer);
     command.trim();
     
     addToHistory(command);
     currentHistoryPos = -1;
-    
+
     if (command.startsWith("rename ")) {
+        // Keep rename command handling here since it's system-level
         String newName = command.substring(7);
         if (newName.length() > 0) {
             deviceName = newName;
             Serial.println("Device name changed to: " + deviceName);
             
-            // Clean up old BLE instance
             bleKeyboard->end();
             delete bleKeyboard;
             BLEDevice::deinit();
             
-            // Initialize new BLE instance with new name
-            delay(500); // Short delay to ensure clean restart
+            delay(500);
             initializeBLE();
             
             Serial.println("BLE reinitialized with new name");
@@ -184,72 +255,33 @@ void executeCommand() {
         Serial.println("  pair     - Scan for nearby BLE devices");
         Serial.println("  rename <name> - Change device name");
         Serial.println("  STRING <text>    - Type text");
+        Serial.println("  SPACE    - Press Space key");
         Serial.println("  ENTER    - Press Enter key");
         Serial.println("  DELAY <ms>       - Wait specified milliseconds");
         Serial.println("  WIN/META         - Press Windows/Meta key");
         Serial.println("  WIN/META <key>   - Windows/Meta key combination");
         Serial.println("  CTRL/ALT/SHIFT <key> - Send key combination");
+        Serial.println("\nMultiple commands can be chained with semicolons:");
+        Serial.println("  Example: WIN r;STRING cmd;ENTER");
     }
     else if (bleKeyboard->isConnected()) {
-        if (command == "WIN" || command == "META") {
-            Serial.println("Pressing Windows/Meta key");
-            bleKeyboard->press(KEY_LEFT_GUI);
-            delay(100);
-            bleKeyboard->releaseAll();
-        }
-        else if (command.startsWith("WIN ") || command.startsWith("META ")) {
-            char key = command.charAt(4);
-            Serial.println("Pressing Windows/Meta+" + String(key));
-            bleKeyboard->press(KEY_LEFT_GUI);
-            bleKeyboard->press(key);
-            delay(100);
-            bleKeyboard->releaseAll();
-        }
-        else if (command.startsWith("STRING ")) {
-            String text = command.substring(7);
-            Serial.println("\nTyping: " + text);
-            bleKeyboard->print(text);
-        }
-        else if (command == "ENTER") {
-            Serial.println("Pressing ENTER");
-            bleKeyboard->write(KEY_RETURN);
-        }
-        else if (command.startsWith("DELAY ")) {
-            int delayTime = command.substring(6).toInt();
-            Serial.println("Delaying: " + String(delayTime) + " ms");
-            delay(delayTime);
-        }
-        else if (command == "CTRL ALT DELETE") {
-            Serial.println("Pressing CTRL+ALT+DELETE");
-            bleKeyboard->press(KEY_LEFT_CTRL);
-            bleKeyboard->press(KEY_LEFT_ALT);
-            bleKeyboard->press(KEY_DELETE);
-            delay(100);
-            bleKeyboard->releaseAll();
-        }
-        else if (command.startsWith("CTRL ")) {
-            char key = command.charAt(5);
-            Serial.println("Pressing CTRL+" + String(key));
-            bleKeyboard->press(KEY_LEFT_CTRL);
-            bleKeyboard->press(key);
-            delay(100);
-            bleKeyboard->releaseAll();
-        }
-        else if (command.startsWith("ALT ")) {
-            char key = command.charAt(4);
-            Serial.println("Pressing ALT+" + String(key));
-            bleKeyboard->press(KEY_LEFT_ALT);
-            bleKeyboard->press(key);
-            delay(100);
-            bleKeyboard->releaseAll();
-        }
-        else if (command.startsWith("SHIFT ")) {
-            char key = command.charAt(6);
-            Serial.println("Pressing SHIFT+" + String(key));
-            bleKeyboard->press(KEY_LEFT_SHIFT);
-            bleKeyboard->press(key);
-            delay(100);
-            bleKeyboard->releaseAll();
+        // Split the command string by semicolons and execute each command
+        int start = 0;
+        int end = command.indexOf(';');
+        
+        while (start < command.length()) {
+            String singleCommand;
+            if (end == -1) {
+                singleCommand = command.substring(start);
+                start = command.length();
+            } else {
+                singleCommand = command.substring(start, end);
+                start = end + 1;
+                end = command.indexOf(';', start);
+            }
+            
+            executeSingleCommand(singleCommand);
+            delay(50); // Small delay between commands
         }
     }
     else {
@@ -279,8 +311,9 @@ void setup() {
 }
 
 void loop() {
-    if (Serial.available()) {
+    while (Serial.available()) {
         char c = Serial.read();
+        delay(1);  // Small delay to ensure reliable reading of pasted text
         
         switch (c) {
             case '\x1B': // Escape sequence
@@ -289,7 +322,9 @@ void loop() {
                 
             case '\r': // Enter
             case '\n':
-                executeCommand();
+                if (cmdIndex > 0) {  // Only execute if there's a command
+                    executeCommand();
+                }
                 break;
                 
             case '\b': // Backspace
