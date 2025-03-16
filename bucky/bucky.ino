@@ -31,6 +31,8 @@ const char *RESET_COLOR = "\033[0m";
 
 // Add this near the top with other global variables
 String deviceName = "ESP32 Ducky"; // Default name
+bool readingScript = false;
+String scriptBuffer = "";
 
 // Function declarations
 void printPrompt() {
@@ -212,7 +214,63 @@ void executeSingleCommand(String command) {
     }
 }
 
-// Modify executeCommand() to handle multiple commands
+// Add this new function to handle script execution
+void executeScript(String script) {
+    Serial.println("Executing script...");
+    
+    // Split the script into lines
+    int start = 0;
+    int end = script.indexOf('\n');
+    
+    while (start < script.length()) {
+        String line;
+        if (end == -1) {
+            line = script.substring(start);
+            start = script.length();
+        } else {
+            line = script.substring(start, end);
+            start = end + 1;
+            end = script.indexOf('\n', start);
+        }
+        
+        line.trim();
+        if (line.length() > 0 && !line.startsWith("//")) {  // Skip empty lines and comments
+            Serial.println("> " + line);
+            executeCommand(line);  // Use existing command execution
+            delay(50);  // Small delay between commands
+        }
+    }
+    
+    Serial.println("Script execution completed");
+}
+
+// Add this overloaded version of executeCommand that takes a String parameter
+void executeCommand(String command) {
+    if (bleKeyboard->isConnected()) {
+        // Split the command string by semicolons and execute each command
+        int start = 0;
+        int end = command.indexOf(';');
+        
+        while (start < command.length()) {
+            String singleCommand;
+            if (end == -1) {
+                singleCommand = command.substring(start);
+                start = command.length();
+            } else {
+                singleCommand = command.substring(start, end);
+                start = end + 1;
+                end = command.indexOf(';', start);
+            }
+            
+            executeSingleCommand(singleCommand);
+            delay(50);
+        }
+    } else {
+        Serial.println("Bluetooth not connected");
+    }
+}
+
+// Modify the original executeCommand() function to add script handling
 void executeCommand() {
     String command = String(cmdBuffer);
     command.trim();
@@ -220,7 +278,22 @@ void executeCommand() {
     addToHistory(command);
     currentHistoryPos = -1;
 
-    if (command.startsWith("rename ")) {
+    if (command == "script") {
+        readingScript = true;
+        scriptBuffer = "";
+        Serial.println("Paste your script below. Send 'END' on a new line to finish:");
+        Serial.println("------------------------");
+    }
+    else if (readingScript) {
+        if (command == "END") {
+            readingScript = false;
+            Serial.println("------------------------");
+            executeScript(scriptBuffer);
+        } else {
+            scriptBuffer += command + "\n";
+        }
+    }
+    else if (command.startsWith("rename ")) {
         // Keep rename command handling here since it's system-level
         String newName = command.substring(7);
         if (newName.length() > 0) {
@@ -261,6 +334,8 @@ void executeCommand() {
         Serial.println("  WIN/META         - Press Windows/Meta key");
         Serial.println("  WIN/META <key>   - Windows/Meta key combination");
         Serial.println("  CTRL/ALT/SHIFT <key> - Send key combination");
+        Serial.println("  script   - Enter script mode (paste Ducky Script)");
+        Serial.println("\nIn script mode, type 'END' on a new line to execute");
         Serial.println("\nMultiple commands can be chained with semicolons:");
         Serial.println("  Example: WIN r;STRING cmd;ENTER");
     }
@@ -281,7 +356,7 @@ void executeCommand() {
             }
             
             executeSingleCommand(singleCommand);
-            delay(50); // Small delay between commands
+            delay(50);
         }
     }
     else {
@@ -291,7 +366,9 @@ void executeCommand() {
     cmdBuffer[0] = '\0';
     cmdIndex = 0;
     Serial.println();
-    printPrompt();
+    if (!readingScript) {
+        printPrompt();
+    }
 }
 
 void setup() {
