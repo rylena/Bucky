@@ -30,7 +30,7 @@ const char *RED_TEXT = "\033[91m";
 const char *RESET_COLOR = "\033[0m";         
 
 // Add this near the top with other global variables
-String deviceName = "ESP32 Ducky"; // Default name
+String deviceName = "Bucky"; // Default name
 bool readingScript = false;
 String scriptBuffer = "";
 
