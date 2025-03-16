@@ -4,7 +4,7 @@
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
 
-BleKeyboard bleKeyboard("ESP32 Ducky");
+BleKeyboard* bleKeyboard;
 BLEScan* pBLEScan;
 
 #define MAX_COMMAND_LENGTH 256
@@ -27,6 +27,9 @@ const char *BLUE_TEXT = "\033[94m";
 const char *GREEN_TEXT = "\033[92m";  
 const char *RED_TEXT = "\033[91m";    
 const char *RESET_COLOR = "\033[0m";         
+
+// Add this near the top with other global variables
+String deviceName = "ESP32 Ducky"; // Default name
 
 // Function declarations
 void printPrompt() {
@@ -128,6 +131,16 @@ void printDuck() {
     Serial.print(RESET_COLOR);
 }
 
+void initializeBLE() {
+    BLEDevice::init(deviceName.c_str());
+    pBLEScan = BLEDevice::getScan();
+    pBLEScan->setActiveScan(true);
+    
+    // Create new BleKeyboard instance
+    bleKeyboard = new BleKeyboard(deviceName.c_str());
+    bleKeyboard->begin();
+}
+
 void executeCommand() {
     String command = String(cmdBuffer);
     command.trim();
@@ -135,7 +148,27 @@ void executeCommand() {
     addToHistory(command);
     currentHistoryPos = -1;
     
-    if (command == "clear") {
+    if (command.startsWith("rename ")) {
+        String newName = command.substring(7);
+        if (newName.length() > 0) {
+            deviceName = newName;
+            Serial.println("Device name changed to: " + deviceName);
+            
+            // Clean up old BLE instance
+            bleKeyboard->end();
+            delete bleKeyboard;
+            BLEDevice::deinit();
+            
+            // Initialize new BLE instance with new name
+            delay(500); // Short delay to ensure clean restart
+            initializeBLE();
+            
+            Serial.println("BLE reinitialized with new name");
+        } else {
+            Serial.println("Please provide a name after 'rename'");
+        }
+    }
+    else if (command == "clear") {
         Serial.print(CLEAR_SCREEN);
         printDuck();
         Serial.print(BLUE_TEXT);
@@ -149,20 +182,37 @@ void executeCommand() {
         Serial.println("Available commands:");
         Serial.println("  clear    - Clear the screen");
         Serial.println("  pair     - Scan for nearby BLE devices");
+        Serial.println("  rename <name> - Change device name");
         Serial.println("  STRING <text>    - Type text");
         Serial.println("  ENTER    - Press Enter key");
         Serial.println("  DELAY <ms>       - Wait specified milliseconds");
+        Serial.println("  WIN/META         - Press Windows/Meta key");
+        Serial.println("  WIN/META <key>   - Windows/Meta key combination");
         Serial.println("  CTRL/ALT/SHIFT <key> - Send key combination");
     }
-    else if (bleKeyboard.isConnected()) {
-        if (command.startsWith("STRING ")) {
+    else if (bleKeyboard->isConnected()) {
+        if (command == "WIN" || command == "META") {
+            Serial.println("Pressing Windows/Meta key");
+            bleKeyboard->press(KEY_LEFT_GUI);
+            delay(100);
+            bleKeyboard->releaseAll();
+        }
+        else if (command.startsWith("WIN ") || command.startsWith("META ")) {
+            char key = command.charAt(4);
+            Serial.println("Pressing Windows/Meta+" + String(key));
+            bleKeyboard->press(KEY_LEFT_GUI);
+            bleKeyboard->press(key);
+            delay(100);
+            bleKeyboard->releaseAll();
+        }
+        else if (command.startsWith("STRING ")) {
             String text = command.substring(7);
             Serial.println("\nTyping: " + text);
-            bleKeyboard.print(text);
+            bleKeyboard->print(text);
         }
         else if (command == "ENTER") {
             Serial.println("Pressing ENTER");
-            bleKeyboard.write(KEY_RETURN);
+            bleKeyboard->write(KEY_RETURN);
         }
         else if (command.startsWith("DELAY ")) {
             int delayTime = command.substring(6).toInt();
@@ -171,35 +221,35 @@ void executeCommand() {
         }
         else if (command == "CTRL ALT DELETE") {
             Serial.println("Pressing CTRL+ALT+DELETE");
-            bleKeyboard.press(KEY_LEFT_CTRL);
-            bleKeyboard.press(KEY_LEFT_ALT);
-            bleKeyboard.press(KEY_DELETE);
+            bleKeyboard->press(KEY_LEFT_CTRL);
+            bleKeyboard->press(KEY_LEFT_ALT);
+            bleKeyboard->press(KEY_DELETE);
             delay(100);
-            bleKeyboard.releaseAll();
+            bleKeyboard->releaseAll();
         }
         else if (command.startsWith("CTRL ")) {
             char key = command.charAt(5);
             Serial.println("Pressing CTRL+" + String(key));
-            bleKeyboard.press(KEY_LEFT_CTRL);
-            bleKeyboard.press(key);
+            bleKeyboard->press(KEY_LEFT_CTRL);
+            bleKeyboard->press(key);
             delay(100);
-            bleKeyboard.releaseAll();
+            bleKeyboard->releaseAll();
         }
         else if (command.startsWith("ALT ")) {
             char key = command.charAt(4);
             Serial.println("Pressing ALT+" + String(key));
-            bleKeyboard.press(KEY_LEFT_ALT);
-            bleKeyboard.press(key);
+            bleKeyboard->press(KEY_LEFT_ALT);
+            bleKeyboard->press(key);
             delay(100);
-            bleKeyboard.releaseAll();
+            bleKeyboard->releaseAll();
         }
         else if (command.startsWith("SHIFT ")) {
             char key = command.charAt(6);
             Serial.println("Pressing SHIFT+" + String(key));
-            bleKeyboard.press(KEY_LEFT_SHIFT);
-            bleKeyboard.press(key);
+            bleKeyboard->press(KEY_LEFT_SHIFT);
+            bleKeyboard->press(key);
             delay(100);
-            bleKeyboard.releaseAll();
+            bleKeyboard->releaseAll();
         }
     }
     else {
@@ -223,12 +273,8 @@ void setup() {
     Serial.println("Type 'help' for available commands");
     Serial.print(RESET_COLOR);
     
-    // Initialize BLE scanning
-    BLEDevice::init("ESP32 Scanner");
-    pBLEScan = BLEDevice::getScan();
-    pBLEScan->setActiveScan(true);
-    
-    bleKeyboard.begin();
+    // Initialize BLE
+    initializeBLE();
     printPrompt();
 }
 
