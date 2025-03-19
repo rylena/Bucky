@@ -2,7 +2,7 @@
 
 # Bucky
 
-Bucky is a Bluetooth-enabled keystroke injector built with an ESP32, allowing remote execution of keyboard inputs on Windows, Linux, and macOS. It emulates a Bluetooth keyboard, supporting commands like text input, key combinations, delays, and Ducky Script for automation. Ideal for security testing and automation, Bucky enables users to execute scripts wirelessly via the serial monitor.
+Bucky is a Bluetooth-enabled keystroke injector built with an ESP32, allowing remote execution of keyboard inputs on Windows, Linux, and macOS. It emulates a Bluetooth keyboard, supporting commands like text input, key combinations, delays, and Ducky Script for automation. Ideal for security testing and automation, Bucky enables users to execute scripts wirelessly via the serial monitor. learn more here:https://rylena.github.io/Bucky/
 
 
 # Quick Start Demo
