@@ -35,8 +35,9 @@ Download and install the [Arduino IDE](https://www.arduino.cc/en/software) on yo
 
 ### 4. Upload the Code to ESP32  
 1. Connect the ESP32 to your computer via USB.  
-2. Select the correct **Board** (ESP32 Dev Module) and **Port** in Arduino IDE.  
-3. Click **Upload** to flash the code.  
+2. Select the correct **Board** (ESP32 Dev Module) and **Port** in Arduino IDE.
+3. Download the code from ([Releases](https://github.com/rylena/Bucky/releases/tag/bucky))
+4. Click **Upload** to flash the code.  
 
 ### 5. Open Serial Monitor  
 - Use **PuTTY** or the Arduino Serial Monitor to connect at **115200 baud rate**.  
