@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bucky | Bluetooth Keystroke Injector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+            color: #e6f1ff;
+            line-height: 1.6;
+        }
+
+        /* Navbar styles */
+        .navbar {
+            padding: 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 25, 47, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            list-style: none;
+            max-width: 1800px;
+            width: 98%;
+            margin: 0 auto;
+        }
+
+        .nav-links a {
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: #00ffff;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero section */
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Add a subtle animated pattern overlay */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1800px;
+            width: 98%;
+            margin: 0 auto;
+            position: relative;
+            gap: 6rem;
+            padding: 0 2rem;
+        }
+
+        .hero-text {
+            flex: 1;
+            padding-left: 4rem;
+        }
+
+        .hero-content h1 {
+            font-size: 8rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #ffffff 30%, #00ffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+        }
+
+        .hero-content h2 {
+            font-size: 3rem;
+            color: #8892b0;
+            font-weight: 400;
+            margin-bottom: 3rem;
+        }
+
+        .hero-image {
+            flex: 0 0 45%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .logo {
+            max-width: 100%;
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.2));
+        }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.4rem;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .github-link:hover {
+            background: rgba(0, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .github-link::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .github-link:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        /* Card styles */
+        .card {
+            background: rgba(17, 34, 64, 0.8);
+            border-radius: 10px;
+            padding: 4rem;
+            margin: 6rem auto;
+            max-width: 1800px;
+            width: 98%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .section-title {
+            color: #64ffda;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            position: relative;
+            text-align: center;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: #64ffda;
+        }
+
+        /* Tech grid */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tech-item {
+            position: relative;
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item i {
+            font-size: 2.5rem;
+            color: #64ffda;
+            transition: transform 0.3s ease;
+        }
+
+        .tech-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 25, 47, 0.95);
+            padding: 1rem;
+            border-radius: 8px;
+            width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-tooltip h3 {
+            color: #64ffda;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .tech-tooltip p {
+            color: #8892b0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .tech-item:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .tech-item:hover i {
+            transform: translateY(-5px);
+        }
+
+        .tech-item:hover .tech-tooltip {
+            opacity: 1;
+            visibility: visible;
+            top: 110%;
+        }
+
+        /* Features section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature {
+            background: rgba(17, 34, 64, 0.5);
+            border-radius: 8px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            background: rgba(17, 34, 64, 0.8);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #64ffda;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature h3 {
+            color: #e6f1ff;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature p {
+            color: #8892b0;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: rgba(10, 25, 47, 0.8);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border-left: 3px solid #64ffda;
+        }
+
+        .code-block code {
+            color: #e6f1ff;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Text styles */
+        .card p {
+            color: #8892b0;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            color: #64ffda;
+            font-size: 1.5rem;
+            margin: 2.5rem 0 1rem;
+        }
+
+        .card h3:first-of-type {
+            margin-top: 1rem;
+        }
+
+        /* Mobile styling */
+        .mobile-text {
+            display: none;
+            color: #8892b0;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .desktop-text {
+            display: block;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Command list styles */
+        .command-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .command-item {
+            background: rgba(10, 25, 47, 0.5);
+            border-radius: 6px;
+            padding: 1rem;
+            border-left: 2px solid #64ffda;
+        }
+
+        .command-item strong {
+            color: #64ffda;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .command-item span {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1400px) {
+            .hero-content h1 {
+                font-size: 6rem;
+            }
+            
+            .hero-content h2 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .hero-content {
+                flex-direction: column;
+                text-align: center;
+                padding: 60px 2rem;
+            }
+            
+            .hero-text {
+                text-align: center;
+                padding-left: 0;
+            }
+            
+            .hero-content h1 {
+                font-size: 4rem;
+            }
+            
+            .hero-content h1 span {
+                display: none;
+            }
+            
+            .hero-content h2 {
+                font-size: 1.8rem;
+            }
+            
+            .hero-image {
+                margin-top: 3rem;
+                flex: 0 0 60%;
+            }
+            
+            .logo {
+                max-width: 60%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .card {
+                padding: 2.5rem;
+                width: 95%;
+                margin: 4rem auto;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .mobile-text {
+                display: block;
+            }
+            
+            .desktop-text {
+                display: none;
+            }
+            
+            .feature-icon {
+                font-size: 2rem;
+            }
+            
+            .command-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-links {
+                font-size: 0.9rem;
+                gap: 0.75rem;
+            }
+            
+            .hero-content h1 {
+                font-size: 3rem;
+            }
+            
+            .section-title {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#documentation">Documentation</a></li>
+        </ul>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-text" data-aos="fade-right" data-aos-delay="200">
+                <h1><span>Meet </span>Bucky</h1>
+                <h2>Bluetooth Keystroke Injector</h2>
+                <a href="https://github.com/rylena/Bucky" target="_blank" class="github-link">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+            <div class="hero-image" data-aos="fade-left" data-aos-delay="400">
+                <img src="Bucky.png" alt="Bucky Logo" class="logo">
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="card about-card" data-aos="fade-right">
+            <h2 class="section-title">About Bucky</h2>
+            <p class="desktop-text">
+                Bucky is a versatile Bluetooth-enabled keystroke injector built with an ESP32 microcontroller. It allows remote execution of keyboard inputs on Windows, Linux, and macOS systems by emulating a Bluetooth keyboard.
+            </p>
+            <br>
+            <p class="desktop-text">
+                The device supports various commands including text input, key combinations, delays, and is compatible with Ducky Script for automation. It's an ideal tool for security testing, penetration testing, and automation tasks, enabling users to execute scripts wirelessly via the serial monitor.
+            </p>
+            <p class="mobile-text">
+                Bucky is a Bluetooth keystroke injector that emulates a keyboard for remote execution of commands on multiple operating systems. Perfect for security testing and automation tasks.
+            </p>
+        </div>
+
+        <div class="card" data-aos="fade-left">
+            <h2 class="section-title">Technologies</h2>
+            <div class="tech-grid">
+                <div class="tech-item" data-aos="fade-up" data-aos-delay="100">
+                    <i class="fas fa-microchip"></i>
+                    <div class="tech-tooltip">
+                        <h3>ESP32</h3>
+                        <p>Main microcontroller with built-in Bluetooth capabilities</p>
+                    </div>
+                </div>
+                <div class="tech-item" data-aos="fade-up" data-aos-delay="200">
+                    <i class="fab fa-bluetooth-b"></i>
+                    <div class="tech-tooltip">
+                        <h3>Bluetooth</h3>
+                        <p>Wireless connectivity for remote control</p>
+                    </div>
+                </div>
+                <div class="tech-item" data-aos="fade-up" data-aos-delay="300">
+                    <i class="fas fa-keyboard"></i>
+                    <div class="tech-tooltip">
+                        <h3>HID Emulation</h3>
+                        <p>Human Interface Device emulation for keystroke injection</p>
+                    </div>
+                </div>
+                <div class="tech-item" data-aos="fade-up" data-aos-delay="400">
+                    <i class="fas fa-code"></i>
+                    <div class="tech-tooltip">
+                        <h3>Ducky Script</h3>
+                        <p>Scripting language for keystrokes automation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features">
+        <div class="card" data-aos="fade-up">
+            <h2 class="section-title">Features</h2>
+            <div class="features">
+                <div class="feature" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-icon">
+                        <i class="fab fa-bluetooth"></i>
+                    </div>
+                    <h3>Bluetooth Connectivity</h3>
+                    <p>Connect wirelessly to target systems without physical access, providing flexibility for remote operations.</p>
+                </div>
+                <div class="feature" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <h3>Multi-Platform Support</h3>
+                    <p>Compatible with Windows, macOS, and Linux operating systems, making it versatile for different environments.</p>
+                </div>
+                <div class="feature" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-icon">
+                        <i class="fas fa-keyboard"></i>
+                    </div>
+                    <h3>Keystroke Injection</h3>
+                    <p>Simulate keyboard inputs remotely, allowing for text entry, key combinations, and special key presses.</p>
+                </div>
+                <div class="feature" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-icon">
+                        <i class="fas fa-terminal"></i>
+                    </div>
+                    <h3>Ducky Script Support</h3>
+                    <p>Use familiar Ducky Script syntax for creating and executing automated keystrokes sequences.</p>
+                </div>
+                <div class="feature" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Security Testing</h3>
+                    <p>Perfect for ethical hacking, penetration testing, and security assessments with wireless capabilities.</p>
+                </div>
+                <div class="feature" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Fast Execution</h3>
+                    <p>Execute commands quickly and efficiently, with customizable delay options for timing precision.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="documentation">
+        <div class="card" data-aos="fade-up">
+            <h2 class="section-title">Documentation</h2>
+            
+            <h3>Getting Started</h3>
+            <p class="desktop-text">
+                To get started with Bucky, you'll need an ESP32 development board and the Arduino IDE. Follow these steps to set up your device:
+            </p>
+            <div class="code-block">
+                <code>
+# Clone the repository<br>
+git clone https://github.com/rylena/Bucky.git<br><br>
+# Open the sketch in Arduino IDE<br>
+# Install required libraries (ESP32 BLE Keyboard)<br>
+# Upload the sketch to your ESP32
+                </code>
+            </div>
+
+            <h3>Basic Usage</h3>
+            <p class="desktop-text">
+                After uploading the sketch to your ESP32, you can connect to it via Bluetooth from your target device. Once connected, you can send commands through the serial monitor to execute keystrokes remotely.
+            </p>
+            <div class="code-block">
+                <code>
+// Open Serial Monitor at 115200 baud<br>
+// Enter commands like:<br>
+STRING Hello, World!<br>
+DELAY 1000<br>
+WINDOWS r<br>
+STRING notepad<br>
+ENTER
+                </code>
+            </div>
+
+            <h3>Supported Commands</h3>
+            <p class="desktop-text">
+                Bucky supports a wide range of commands for keystroke injection. Here are some of the main commands you can use:
+            </p>
+            <div class="command-list">
+                <div class="command-item">
+                    <strong>STRING [text]</strong>
+                    <span>Types the specified text</span>
+                </div>
+                <div class="command-item">
+                    <strong>DELAY [ms]</strong>
+                    <span>Waits for specified milliseconds</span>
+                </div>
+                <div class="command-item">
+                    <strong>WINDOWS [key]</strong>
+                    <span>Presses Windows+key combination</span>
+                </div>
+                <div class="command-item">
+                    <strong>CTRL [key]</strong>
+                    <span>Presses Ctrl+key combination</span>
+                </div>
+                <div class="command-item">
+                    <strong>ALT [key]</strong>
+                    <span>Presses Alt+key combination</span>
+                </div>
+                <div class="command-item">
+                    <strong>SHIFT [key]</strong>
+                    <span>Presses Shift+key combination</span>
+                </div>
+                <div class="command-item">
+                    <strong>ENTER</strong>
+                    <span>Presses Enter key</span>
+                </div>
+                <div class="command-item">
+                    <strong>SPACE</strong>
+                    <span>Presses Space key</span>
+                </div>
+                <div class="command-item">
+                    <strong>TAB</strong>
+                    <span>Presses Tab key</span>
+                </div>
+                <div class="command-item">
+                    <strong>ESCAPE</strong>
+                    <span>Presses Escape key</span>
+                </div>
+                <div class="command-item">
+                    <strong>F1-F12</strong>
+                    <span>Presses function keys</span>
+                </div>
+                <div class="command-item">
+                    <strong>ARROW KEYS</strong>
+                    <span>UP, DOWN, LEFT, RIGHT</span>
+                </div>
+            </div>
+
+            <h3>Example Scripts</h3>
+            <p class="desktop-text">
+                Here's an example script that opens Notepad on Windows and types a message:
+            </p>
+            <div class="code-block">
+                <code>
+WINDOWS r<br>
+DELAY 500<br>
+STRING notepad<br>
+ENTER<br>
+DELAY 1000<br>
+STRING This message was typed by Bucky!<br>
+ENTER<br>
+STRING A Bluetooth keystroke injector for security testing.
+                </code>
+            </div>
+            
+          
+        </div>
+    </section>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+      });
+    </script>
+</body>
+</html>
