@@ -109,7 +109,7 @@ void handleEscapeSequence() {
 
 void scanForDevices() {
     Serial.println("Searching for devices...");
-    BLEScanResults foundDevices = pBLEScan->start(5); // Scan for 5 seconds
+    BLEScanResults foundDevices = *pBLEScan->start(5);
     
     for(int i = 0; i < foundDevices.getCount(); i++) {
         BLEAdvertisedDevice device = foundDevices.getDevice(i);
