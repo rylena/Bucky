@@ -34,6 +34,22 @@ String deviceName = "Bucky"; // Default name
 bool readingScript = false;
 String scriptBuffer = "";
 
+// Add these function declarations near the top with other function declarations
+void pressSpace(String);
+void pressWinKey(String);
+void pressWinWithKey(String);
+void typeString(String);
+void pressEnter(String);
+void waitDelay(String);
+void pressCtrlAltDelete(String);
+void pressCtrlWithKey(String);
+void pressAltWithKey(String);
+void pressShiftWithKey(String);
+
+// Add near the top with other function declarations
+void executeCommand(String command);
+void executeCommand();
+
 // Function declarations
 void printPrompt() {
     Serial.print("\033[0m$ ");  // Reset color and show prompt
@@ -144,77 +160,102 @@ void initializeBLE() {
     bleKeyboard->begin();
 }
 
-// Add this new function to execute a single command
+// Add these function definitions before executeSingleCommand
+void pressSpace(String) {
+    bleKeyboard->write(' ');
+}
+
+void pressWinKey(String) {
+    bleKeyboard->press(KEY_LEFT_GUI);
+    delay(100);
+    bleKeyboard->releaseAll();
+}
+
+void pressWinWithKey(String param) {
+    bleKeyboard->press(KEY_LEFT_GUI);
+    bleKeyboard->press(param[0]);
+    delay(100);
+    bleKeyboard->releaseAll();
+}
+
+void typeString(String text) {
+    bleKeyboard->print(text);
+}
+
+void pressEnter(String) {
+    bleKeyboard->write(KEY_RETURN);
+}
+
+void waitDelay(String param) {
+    delay(param.toInt());
+}
+
+void pressCtrlAltDelete(String) {
+    bleKeyboard->press(KEY_LEFT_CTRL);
+    bleKeyboard->press(KEY_LEFT_ALT);
+    bleKeyboard->press(KEY_DELETE);
+    delay(100);
+    bleKeyboard->releaseAll();
+}
+
+void pressCtrlWithKey(String param) {
+    bleKeyboard->press(KEY_LEFT_CTRL);
+    bleKeyboard->press(param[0]);
+    delay(100);
+    bleKeyboard->releaseAll();
+}
+
+void pressAltWithKey(String param) {
+    bleKeyboard->press(KEY_LEFT_ALT);
+    bleKeyboard->press(param[0]);
+    delay(100);
+    bleKeyboard->releaseAll();
+}
+
+void pressShiftWithKey(String param) {
+    bleKeyboard->press(KEY_LEFT_SHIFT);
+    bleKeyboard->press(param[0]);
+    delay(100);
+    bleKeyboard->releaseAll();
+}
+
+// Modify executeSingleCommand to use the global functions
 void executeSingleCommand(String command) {
     command.trim();
     
-    if (command == "SPACE") {
-        Serial.println("Pressing Space");
-        bleKeyboard->write(' ');
-    }
-    else if (command == "WIN" || command == "META") {
-        Serial.println("Pressing Windows/Meta key");
-        bleKeyboard->press(KEY_LEFT_GUI);
-        delay(100);
-        bleKeyboard->releaseAll();
-    }
-    else if (command.startsWith("WIN ") || command.startsWith("META ")) {
-        char key = command.charAt(4);
-        Serial.println("Pressing Windows/Meta+" + String(key));
-        bleKeyboard->press(KEY_LEFT_GUI);
-        bleKeyboard->press(key);
-        delay(100);
-        bleKeyboard->releaseAll();
-    }
-    else if (command.startsWith("STRING ")) {
-        String text = command.substring(7);
-        Serial.println("\nTyping: " + text);
-        bleKeyboard->print(text);
-    }
-    else if (command == "ENTER") {
-        Serial.println("Pressing ENTER");
-        bleKeyboard->write(KEY_RETURN);
-    }
-    else if (command.startsWith("DELAY ")) {
-        int delayTime = command.substring(6).toInt();
-        Serial.println("Delaying: " + String(delayTime) + " ms");
-        delay(delayTime);
-    }
-    else if (command == "CTRL ALT DELETE") {
-        Serial.println("Pressing CTRL+ALT+DELETE");
-        bleKeyboard->press(KEY_LEFT_CTRL);
-        bleKeyboard->press(KEY_LEFT_ALT);
-        bleKeyboard->press(KEY_DELETE);
-        delay(100);
-        bleKeyboard->releaseAll();
-    }
-    else if (command.startsWith("CTRL ")) {
-        char key = command.charAt(5);
-        Serial.println("Pressing CTRL+" + String(key));
-        bleKeyboard->press(KEY_LEFT_CTRL);
-        bleKeyboard->press(key);
-        delay(100);
-        bleKeyboard->releaseAll();
-    }
-    else if (command.startsWith("ALT ")) {
-        char key = command.charAt(4);
-        Serial.println("Pressing ALT+" + String(key));
-        bleKeyboard->press(KEY_LEFT_ALT);
-        bleKeyboard->press(key);
-        delay(100);
-        bleKeyboard->releaseAll();
-    }
-    else if (command.startsWith("SHIFT ")) {
-        char key = command.charAt(6);
-        Serial.println("Pressing SHIFT+" + String(key));
-        bleKeyboard->press(KEY_LEFT_SHIFT);
-        bleKeyboard->press(key);
-        delay(100);
-        bleKeyboard->releaseAll();
+    // Define command map structure
+    struct CommandAction {
+        const char* name;
+        void (*action)(String);
+    };
+
+    // Define command array
+    static const CommandAction commands[] = {
+        {"SPACE", pressSpace},
+        {"WIN", pressWinKey},
+        {"META", pressWinKey},
+        {"WIN ", pressWinWithKey},
+        {"META ", pressWinWithKey},
+        {"STRING ", typeString},
+        {"ENTER", pressEnter},
+        {"DELAY ", waitDelay},
+        {"CTRL ALT DELETE", pressCtrlAltDelete},
+        {"CTRL ", pressCtrlWithKey},
+        {"ALT ", pressAltWithKey},
+        {"SHIFT ", pressShiftWithKey}
+    };
+
+    // Find and execute the command
+    for (const CommandAction& cmd : commands) {
+        if (command.startsWith(cmd.name)) {
+            String param = command.substring(strlen(cmd.name));
+            Serial.println("Executing: " + command);
+            cmd.action(param);
+            return;
+        }
     }
 }
 
-// Add this new function to handle script execution
 void executeScript(String script) {
     Serial.println("Executing script...");
     
@@ -244,7 +285,6 @@ void executeScript(String script) {
     Serial.println("Script execution completed");
 }
 
-// Add this overloaded version of executeCommand that takes a String parameter
 void executeCommand(String command) {
     if (bleKeyboard->isConnected()) {
         // Split the command string by semicolons and execute each command
@@ -270,7 +310,6 @@ void executeCommand(String command) {
     }
 }
 
-// Modify the original executeCommand() function to add script handling
 void executeCommand() {
     String command = String(cmdBuffer);
     command.trim();
